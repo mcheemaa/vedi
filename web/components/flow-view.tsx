@@ -89,15 +89,6 @@ export function FlowView() {
 
       <div className="flex min-h-0 flex-1 items-center justify-center p-4">
         <svg viewBox="0 0 1080 520" className="max-h-full w-full max-w-[1720px]" role="img" aria-label="live architecture flow">
-          <defs>
-            <filter id="fire-glow" x="-40%" y="-40%" width="180%" height="180%">
-              <feGaussianBlur stdDeviation="2.4" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
           <g fontFamily="ui-monospace, 'SF Mono', Menlo, monospace" fill="var(--foreground)">
             <Panel x={28} y={200} w={190} h={90}>
               <rect x={46} y={220} width={9} height={9} fill="var(--voice)" />
@@ -215,12 +206,17 @@ function Label({ x, y, wide, children }: { x: number; y: number; wide?: boolean;
 }
 
 function Edge({ d, on, coral }: { d: string; on: boolean; coral?: boolean }) {
+  const hot = coral ? "var(--voice)" : "var(--foreground)";
   return (
     <g fill="none">
       <path d={d} stroke="var(--border-soft)" strokeWidth={2} strokeDasharray="6 7" className="edge-idle" />
       {on && (
-        <path d={d} stroke={coral ? "var(--voice)" : "var(--foreground)"} strokeWidth={2.5}
-          className="edge-fire" filter="url(#fire-glow)" />
+        <g>
+          {/* A wide soft underlay is the glow: SVG filters collapse on
+              axis-aligned lines (zero-area bounding box), so no filter. */}
+          <path d={d} stroke={hot} strokeWidth={8} strokeOpacity={0.28} className="edge-fire" />
+          <path d={d} stroke={hot} strokeWidth={2.5} className="edge-fire" />
+        </g>
       )}
     </g>
   );

@@ -181,7 +181,7 @@ body {
 }
 .edge-fire { stroke-dasharray: 6 8; animation: edge-fire 1.4s ease-out forwards; }
 @keyframes edge-idle { to { stroke-dashoffset: -13; } }
-.edge-idle { animation: edge-idle 2.6s linear infinite; }
+.edge-idle { animation: edge-idle 8s linear infinite; }
 @keyframes chip-flash {
   0% { border-color: var(--voice); }
   100% { border-color: var(--border-soft); }
