@@ -214,8 +214,8 @@ function Edge({ d, on, coral }: { d: string; on: boolean; coral?: boolean }) {
         <g>
           {/* A wide soft underlay is the glow: SVG filters collapse on
               axis-aligned lines (zero-area bounding box), so no filter. */}
-          <path d={d} stroke={hot} strokeWidth={8} strokeOpacity={0.28} className="edge-fire" />
-          <path d={d} stroke={hot} strokeWidth={2.5} className="edge-fire" />
+          <path d={d} stroke={hot} strokeWidth={5} strokeOpacity={0.13} className="edge-fire" />
+          <path d={d} stroke={hot} strokeWidth={1.8} className="edge-fire" />
         </g>
       )}
     </g>
