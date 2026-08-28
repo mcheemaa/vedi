@@ -42,14 +42,18 @@ export async function GET() {
       SELECT toStartOfMinute(ts) AS minute, toString(count()) AS n
       FROM vedi.percepts WHERE ts > now() - INTERVAL 12 MINUTE
       GROUP BY minute ORDER BY minute`),
-    chQuery<{ silences: string; keyframes: string }>(`
+    chQuery<{ silences: string; keyframes: string; fresh: string }>(`
       SELECT
         (SELECT toString(count()) FROM vedi.traces WHERE action = 'ignore' AND ts > now() - INTERVAL 12 HOUR) AS silences,
-        (SELECT toString(count()) FROM vedi.percepts WHERE keyframe = 1 AND ts > now() - INTERVAL 12 HOUR) AS keyframes`),
+        (SELECT toString(count()) FROM vedi.percepts WHERE keyframe = 1 AND ts > now() - INTERVAL 12 HOUR) AS keyframes,
+        (SELECT toString(count()) FROM vedi.percepts WHERE ts > now() - INTERVAL 2 MINUTE) AS fresh`),
   ]);
 
   const eyeState = eye[0];
-  const eyesOpen = eyeState?.kind === "eye_started" || eyeState?.kind === "camera_recovered";
+  // Open means the lifecycle says so AND percepts are actually arriving;
+  // a shutdown whose goodbye never flushed cannot claim sight.
+  const lifecycleOpen = eyeState?.kind === "eye_started" || eyeState?.kind === "camera_recovered";
+  const eyesOpen = lifecycleOpen && Number(counters[0]?.fresh ?? 0) > 0;
 
   return Response.json({
     now: Date.now(),

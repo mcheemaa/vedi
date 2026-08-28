@@ -87,13 +87,14 @@ export function FlowView() {
         </span>
       </header>
 
-      <div className="flex min-h-0 flex-1 items-center justify-center p-6">
-        <svg viewBox="0 0 1080 520" className="max-h-full w-full max-w-[1400px]" role="img" aria-label="live architecture flow">
+      <div className="flex min-h-0 flex-1 items-center justify-center p-4">
+        <svg viewBox="0 0 1080 520" className="max-h-full w-full max-w-[1720px]" role="img" aria-label="live architecture flow">
           <g fontFamily="ui-monospace, 'SF Mono', Menlo, monospace" fill="var(--foreground)">
-            <Panel x={28} y={206} w={152} h={72}>
-              <rect x={46} y={224} width={9} height={9} fill="var(--voice)" />
-              <text x={64} y={233} fontSize={14}>any camera</text>
-              <Label x={46} y={258}>{eyesOpen ? "LIVE" : "OFF"} · IPHONE · MACBOOK</Label>
+            <Panel x={28} y={200} w={190} h={90}>
+              <rect x={46} y={220} width={9} height={9} fill="var(--voice)" />
+              <text x={64} y={229} fontSize={14}>any camera</text>
+              <Label x={46} y={252}>{eyesOpen ? "LIVE NOW" : "EYES OFF"}</Label>
+              <Label x={46} y={272}>IPHONE · MACBOOK</Label>
             </Panel>
 
             <Panel x={234} y={128} w={216} h={232}>
@@ -109,20 +110,20 @@ export function FlowView() {
               <rect x={548} y={76} width={9} height={9} fill="#f2c744" />
               <Label x={566} y={85} wide>CLICKHOUSE · THE MIND</Label>
               <Chip x={548} y={100} w={146}>percepts · vectors</Chip>
-              <Chip x={702} y={100} w={62}>regions</Chip>
-              <Chip x={548} y={132} w={100}>traces</Chip>
-              <Chip x={656} y={132} w={108}>facts · watches</Chip>
+              <Chip x={698} y={100} w={66}>regions</Chip>
+              <Chip x={548} y={132} w={88}>traces</Chip>
+              <Chip x={644} y={132} w={120}>facts · watches</Chip>
               <Chip x={548} y={164} w={122} flash={active("rows")}>deep · dreams</Chip>
               <Chip x={678} y={164} w={86}>digests</Chip>
               <Label x={548} y={216}>THE TRANSCRIPT IS A TABLE</Label>
-              <Label x={548} y={234}>{silences} SILENCES TODAY, EACH WITH A REASON</Label>
+              <Label x={548} y={234}>{silences} SILENCES, EACH WITH A REASON</Label>
               <Label x={548} y={252}>ANTI-JOIN AS WORK QUEUE</Label>
             </Panel>
 
             <Panel x={530} y={336} w={252} h={98}>
               <rect x={548} y={356} width={9} height={9} fill="#5c93c4" />
               <Label x={566} y={365} wide>POSTGRES · THE VAULT</Label>
-              <text x={548} y={392} fontSize={12.5}>{frames.toLocaleString()} frames · system of record</text>
+              <text x={548} y={392} fontSize={11.5}>{frames.toLocaleString()} frames · system of record</text>
               <Label x={548} y={414}>VERIFY-FULL · PINNED CA</Label>
             </Panel>
 
@@ -132,7 +133,7 @@ export function FlowView() {
                 <tspan fill="var(--voice)">vedi</tspan> · luna · speaks
               </Chip>
               <Chip x={870} y={182} w={164} flash={active("rows")}>
-                dreamer · {pending} to study
+                dreamer · {pending} left
               </Chip>
               <Chip x={870} y={224} w={164}>narrator · the day</Chip>
               <Label x={870} y={292}>SPEAK · NOTE · IGNORE</Label>
@@ -147,7 +148,7 @@ export function FlowView() {
               <Label x={870} y={420}>{speaking ? "SPEAKING NOW" : "QUIET"}</Label>
             </g>
 
-            <Edge d="M180 242 H 234" on={eyesOpen} />
+            <Edge d="M218 245 H 234" on={eyesOpen} />
             <Edge d="M450 200 L 530 150" on={active("eyeMind")} />
             <Edge d="M450 300 L 530 372" on={active("eyeVault")} />
             <Edge d="M656 336 V 272" on={active("cdc")} />
@@ -191,7 +192,7 @@ function Chip({
       <rect x={x} y={y} width={w} height={coral ? 34 : 30} fill="var(--panel-2)"
         stroke={coral ? "var(--voice)" : "var(--border-soft)"}
         className={flash ? "chip-flash" : ""} strokeOpacity={coral ? 0.6 : 1} />
-      <text x={x + 12} y={y + 20} fontSize={12}>{children}</text>
+      <text x={x + 12} y={y + 20} fontSize={11.5}>{children}</text>
     </g>
   );
 }
