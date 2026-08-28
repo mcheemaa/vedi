@@ -3,6 +3,7 @@
 #   ./demo up        start brain + surface, arm the supervisor
 #   ./demo phone     eyes = the iPhone (Continuity Camera)
 #   ./demo mac       eyes = the MacBook camera
+#   ./demo off       close the eyes, keep everything else running
 #   ./demo status    one-glance health
 #   ./demo down      graceful stop, end of day
 #   ./demo logs      follow all logs
@@ -130,6 +131,11 @@ case "${1:-}" in
     brain_up; web_up; eye_up "$1"; supervisor_up
     say "ready    stage $WEB · flow $WEB/flow"
     ;;
+  off)
+    echo "none" > "$STATE"
+    eye_stop
+    say "eyes     closed: brain and surface still up: ./demo phone or ./demo mac to reopen"
+    ;;
   status)
     if brain_alive; then
       curl -s -m 3 "$BRAIN/health" | python3 -c '
@@ -159,6 +165,6 @@ print("dreamer  " + d["dreamer"]["dreamt"] + " studied · " + d["dreamer"]["pend
     tail -f "$LOGS/brain.log" "$LOGS/eye.log" "$LOGS/web.log"
     ;;
   *)
-    sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'
     ;;
 esac

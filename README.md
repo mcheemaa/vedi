@@ -134,6 +134,7 @@ The short way, once dependencies are installed:
 ```console
 ./demo mac       # everything up, eyes on the MacBook
 ./demo phone     # everything up, eyes on the iPhone
+./demo off       # close the eyes, keep the rest running
 ./demo status    # one-glance health
 ./demo down      # end of day
 ```
