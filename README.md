@@ -129,6 +129,17 @@ does. Secrets live in `.env.local` at the repo root: `CLICKHOUSE_HOST`,
 `POSTGRES_URL`, `OPENAI_API_KEY`. Model weights (MobileCLIP-S2, FastVLM
 0.5B) live under `eye/Models/`, gitignored.
 
+The short way, once dependencies are installed:
+
+```console
+./demo mac       # everything up, eyes on the MacBook
+./demo phone     # everything up, eyes on the iPhone
+./demo status    # one-glance health
+./demo down      # end of day
+```
+
+A supervisor restarts anything that dies. The long way:
+
 ```console
 # the eye
 cd eye

@@ -1,0 +1,164 @@
+#!/bin/bash
+# Vedi demo operations: one foundation that never stops, eyes that swap.
+#   ./demo up        start brain + surface, arm the supervisor
+#   ./demo phone     eyes = the iPhone (Continuity Camera)
+#   ./demo mac       eyes = the MacBook camera
+#   ./demo status    one-glance health
+#   ./demo down      graceful stop, end of day
+#   ./demo logs      follow all logs
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+LOGS="$ROOT/logs"
+STATE="$LOGS/eye.device"
+SUP_PID="$LOGS/supervisor.pid"
+BRAIN="http://127.0.0.1:8484"
+WEB="http://localhost:3000"
+EYE_BIN="$ROOT/eye/.xcodebuild/Build/Products/Debug/VediEye"
+mkdir -p "$LOGS"
+
+say() { printf '%s\n' "$*"; }
+
+brain_alive() { curl -s -m 8 "$BRAIN/health" >/dev/null 2>&1; }
+web_alive()   { curl -s -m 6 -o /dev/null "$WEB" 2>/dev/null; }
+eye_alive()   { pgrep -f "VediEye --watch" >/dev/null 2>&1; }
+
+brain_up() {
+  if brain_alive; then say "brain    already up"; return; fi
+  say "brain    starting"
+  (cd "$ROOT/brain" && nohup bun run src/server.ts >> "$LOGS/brain.log" 2>&1 &)
+  for _ in $(seq 1 20); do
+    if brain_alive; then say "brain    up"; return; fi
+    sleep 1
+  done
+  say "brain    FAILED to start: tail -20 $LOGS/brain.log"; exit 1
+}
+
+web_up() {
+  if web_alive; then say "surface  already up"; return; fi
+  say "surface  starting"
+  (cd "$ROOT/web" && nohup bun dev >> "$LOGS/web.log" 2>&1 &)
+  for _ in $(seq 1 60); do
+    if web_alive; then say "surface  up at $WEB"; return; fi
+    sleep 1
+  done
+  say "surface  FAILED to start: tail -20 $LOGS/web.log"; exit 1
+}
+
+eye_stop() {
+  if eye_alive; then
+    pkill -f "VediEye --watch" 2>/dev/null || true
+    for _ in $(seq 1 10); do eye_alive || break; sleep 1; done
+  fi
+}
+
+eye_up() {
+  device="$1"
+  if [ ! -x "$EYE_BIN" ]; then
+    say "eye      binary missing: build with:"
+    say "         cd eye && xcodebuild -scheme VediEye -destination 'platform=macOS' -derivedDataPath .xcodebuild build"
+    exit 1
+  fi
+  eye_stop
+  if [ "$device" = "phone" ]; then
+    say "eye      opening on the iPhone (phone must be unlocked, nearby, same WiFi)"
+    (cd "$ROOT/eye" && nohup "$EYE_BIN" --watch --loop --device Cheem >> "$LOGS/eye.log" 2>&1 &)
+  else
+    say "eye      opening on the MacBook camera"
+    (cd "$ROOT/eye" && nohup "$EYE_BIN" --watch --loop >> "$LOGS/eye.log" 2>&1 &)
+  fi
+  sleep 6
+  if ! eye_alive; then
+    say "eye      DID NOT stay up"
+    [ "$device" = "phone" ] && say "         usual cause: phone locked or out of range: unlock it and rerun ./demo phone"
+    say "         details: tail -20 $LOGS/eye.log"
+    echo "none" > "$STATE"
+    exit 1
+  fi
+  echo "$device" > "$STATE"
+  # First percepts need a live scene; a perfectly still frame is gated by design.
+  for _ in $(seq 1 20); do
+    fresh="$(curl -s -m 3 "$WEB/api/pulse" 2>/dev/null | grep -o '"eyesOpen":true' || true)"
+    if [ -n "$fresh" ]; then say "eye      watching: percepts flowing"; return; fi
+    sleep 1
+  done
+  say "eye      process is up; no percepts yet (still scene warms slowly): ./demo status to recheck"
+}
+
+supervisor_up() {
+  if [ -f "$SUP_PID" ] && kill -0 "$(cat "$SUP_PID")" 2>/dev/null; then return; fi
+  (
+    while true; do
+      sleep 10
+      # Two strikes before a restart: one slow health response must not
+      # spawn a duplicate that dies fighting over the port.
+      if ! brain_alive; then
+        sleep 3
+        brain_alive || (cd "$ROOT/brain" && nohup bun run src/server.ts >> "$LOGS/brain.log" 2>&1 &)
+      fi
+      if ! web_alive; then
+        sleep 3
+        web_alive || (cd "$ROOT/web" && nohup bun dev >> "$LOGS/web.log" 2>&1 &)
+      fi
+      wanted="$(cat "$STATE" 2>/dev/null || echo none)"
+      if [ "$wanted" != "none" ] && ! eye_alive; then
+        if [ "$wanted" = "phone" ]; then
+          (cd "$ROOT/eye" && nohup "$EYE_BIN" --watch --loop --device Cheem >> "$LOGS/eye.log" 2>&1 &)
+        else
+          (cd "$ROOT/eye" && nohup "$EYE_BIN" --watch --loop >> "$LOGS/eye.log" 2>&1 &)
+        fi
+      fi
+    done
+  ) >> "$LOGS/supervisor.log" 2>&1 &
+  echo $! > "$SUP_PID"
+  say "watch    supervisor armed: crashed pieces restart within 10s"
+}
+
+supervisor_down() {
+  if [ -f "$SUP_PID" ]; then
+    kill "$(cat "$SUP_PID")" 2>/dev/null || true
+    rm -f "$SUP_PID"
+  fi
+}
+
+case "${1:-}" in
+  up)
+    brain_up; web_up; supervisor_up
+    say "ready    eyes are closed: ./demo phone or ./demo mac"
+    ;;
+  phone|mac)
+    brain_up; web_up; eye_up "$1"; supervisor_up
+    say "ready    stage $WEB · flow $WEB/flow"
+    ;;
+  status)
+    if brain_alive; then
+      curl -s -m 3 "$BRAIN/health" | python3 -c '
+import json,sys
+d=json.load(sys.stdin)
+print("brain    up · " + d["model"] + " · " + d["frames"])
+print("dreamer  " + d["dreamer"]["dreamt"] + " studied · " + d["dreamer"]["pending"] + " pending")'
+    else say "brain    DOWN"; fi
+    if web_alive; then say "surface  up at $WEB"; else say "surface  DOWN"; fi
+    if eye_alive; then
+      say "eye      up on: $(cat "$STATE" 2>/dev/null || echo unknown)"
+    else say "eye      closed"; fi
+    if [ -f "$SUP_PID" ] && kill -0 "$(cat "$SUP_PID")" 2>/dev/null; then
+      say "watch    supervisor armed"
+    else say "watch    supervisor off"; fi
+    ;;
+  down)
+    supervisor_down
+    echo "none" > "$STATE"
+    eye_stop
+    lsof -t -i :8484 -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null || true
+    lsof -t -i :3000 -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null || true
+    sleep 2
+    say "down     everything stopped: memory is safe in the databases"
+    ;;
+  logs)
+    tail -f "$LOGS/brain.log" "$LOGS/eye.log" "$LOGS/web.log"
+    ;;
+  *)
+    sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'
+    ;;
+esac
