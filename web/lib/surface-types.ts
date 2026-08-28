@@ -25,6 +25,8 @@ export type Pulse = {
   now: number;
   brainUp: boolean;
   eyesOpen: boolean;
+  dreamer?: { dreamt: string; pending: string } | null;
+  framesStored?: number;
   vision: string;
   policy: string;
   regions: {

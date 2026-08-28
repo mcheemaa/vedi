@@ -5,8 +5,11 @@ export const dynamic = "force-dynamic";
 /** One heartbeat of surface state: the literal context block from the
  * Brain, the region strip, and the thought stream, silences included. */
 export async function GET() {
-  const [mind, regions, thoughts, eye, spark, counters] = await Promise.all([
+  const [mind, health, regions, thoughts, eye, spark, counters] = await Promise.all([
     fetch("http://127.0.0.1:8484/vision", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null),
+    fetch("http://127.0.0.1:8484/health", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .catch(() => null),
     chQuery<{
@@ -57,6 +60,8 @@ export async function GET() {
     regions,
     thoughts,
     spark: spark.map((row) => Number(row.n)),
+    dreamer: health?.dreamer ?? null,
+    framesStored: Number(String(health?.frames ?? "").replace(/\D/g, "") || 0),
     silences: Number(counters[0]?.silences ?? 0),
     keyframes: Number(counters[0]?.keyframes ?? 0),
   });

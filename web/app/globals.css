@@ -173,3 +173,14 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+@keyframes edge-fire {
+  0% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: -24; opacity: 0; }
+}
+.edge-fire { stroke-dasharray: 6 8; animation: edge-fire 1.1s ease-out forwards; }
+@keyframes chip-flash {
+  0% { border-color: var(--voice); }
+  100% { border-color: var(--border-soft); }
+}
+.chip-flash { animation: chip-flash 1.2s ease-out forwards; }

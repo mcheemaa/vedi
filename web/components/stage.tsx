@@ -123,6 +123,14 @@ export function StagePane({
           {pulse?.silences ?? 0} SILENCES TODAY
         </span>
         <Button
+          asChild
+          variant="outline"
+          size="sm"
+          className="label h-auto rounded-none border-border-soft bg-black/45 px-2.5 py-1.5 hover:bg-black/60 hover:!text-white"
+        >
+          <a href="/flow" aria-label="open the live flow view">FLOW</a>
+        </Button>
+        <Button
           variant="outline"
           size="sm"
           onClick={onSearch}
