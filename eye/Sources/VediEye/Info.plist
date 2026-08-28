@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>wiki.vedi.eye</string>
+    <key>CFBundleName</key>
+    <string>VediEye</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Vedi's eye captures frames to build its visual memory.</string>
+</dict>
+</plist>
