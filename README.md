@@ -159,4 +159,5 @@ just speak.
 
 ---
 
-Built for ClickHouse's Better Days hackathon, Japantown, San Francisco.
+MIT licensed. Built for ClickHouse's Better Days hackathon, Japantown, San
+Francisco.
