@@ -176,7 +176,8 @@ body {
 
 @keyframes edge-fire {
   0% { stroke-dashoffset: 0; opacity: 1; }
-  100% { stroke-dashoffset: -24; opacity: 0; }
+  70% { opacity: 1; }
+  100% { stroke-dashoffset: -30; opacity: 0; }
 }
 .edge-fire { stroke-dasharray: 6 8; animation: edge-fire 1.4s ease-out forwards; }
 @keyframes edge-idle { to { stroke-dashoffset: -13; } }
