@@ -7,6 +7,8 @@
 #   ./demo status    one-glance health
 #   ./demo down      graceful stop, end of day
 #   ./demo logs      follow all logs
+# VEDI_WEB_PORT picks the surface port (default 3000); the choice
+# sticks across invocations until changed.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -14,14 +16,22 @@ LOGS="$ROOT/logs"
 STATE="$LOGS/eye.device"
 SUP_PID="$LOGS/supervisor.pid"
 BRAIN="http://127.0.0.1:8484"
-WEB="http://localhost:3000"
+PORT_FILE="$LOGS/web.port"
+if [ -n "${VEDI_WEB_PORT:-}" ]; then
+  WEB_PORT="$VEDI_WEB_PORT"
+elif [ -f "$PORT_FILE" ]; then
+  WEB_PORT="$(cat "$PORT_FILE")"
+else
+  WEB_PORT="3000"
+fi
+WEB="http://localhost:$WEB_PORT"
 EYE_BIN="$ROOT/eye/.xcodebuild/Build/Products/Debug/VediEye"
 mkdir -p "$LOGS"
 
 say() { printf '%s\n' "$*"; }
 
 brain_alive() { curl -s -m 8 "$BRAIN/health" >/dev/null 2>&1; }
-web_alive()   { curl -s -m 6 -o /dev/null "$WEB" 2>/dev/null; }
+web_alive()   { [ "$(curl -s -m 6 -o /dev/null -w "%{http_code}" "$WEB/api/pulse" 2>/dev/null)" = "200" ]; }
 eye_alive()   { pgrep -f "VediEye --watch" >/dev/null 2>&1; }
 
 brain_up() {
@@ -36,9 +46,15 @@ brain_up() {
 }
 
 web_up() {
-  if web_alive; then say "surface  already up"; return; fi
-  say "surface  starting"
-  (cd "$ROOT/web" && nohup bun dev >> "$LOGS/web.log" 2>&1 &)
+  if web_alive; then say "surface  already up on :$WEB_PORT"; return; fi
+  if lsof -t -i ":$WEB_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+    say "surface  port $WEB_PORT is taken by something that is not Vedi"
+    say "         pick another: VEDI_WEB_PORT=3100 ./demo up"
+    exit 1
+  fi
+  echo "$WEB_PORT" > "$PORT_FILE"
+  say "surface  starting on :$WEB_PORT"
+  (cd "$ROOT/web" && PORT="$WEB_PORT" nohup bun dev >> "$LOGS/web.log" 2>&1 &)
   for _ in $(seq 1 60); do
     if web_alive; then say "surface  up at $WEB"; return; fi
     sleep 1
@@ -99,7 +115,7 @@ supervisor_up() {
       fi
       if ! web_alive; then
         sleep 3
-        web_alive || (cd "$ROOT/web" && nohup bun dev >> "$LOGS/web.log" 2>&1 &)
+        web_alive || (cd "$ROOT/web" && PORT="$WEB_PORT" nohup bun dev >> "$LOGS/web.log" 2>&1 &)
       fi
       wanted="$(cat "$STATE" 2>/dev/null || echo none)"
       if [ "$wanted" != "none" ] && ! eye_alive; then
@@ -157,7 +173,11 @@ print("dreamer  " + d["dreamer"]["dreamt"] + " studied · " + d["dreamer"]["pend
     echo "none" > "$STATE"
     eye_stop
     lsof -t -i :8484 -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null || true
-    lsof -t -i :3000 -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null || true
+    if web_alive; then
+      lsof -t -i ":$WEB_PORT" -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null || true
+    else
+      say "surface  nothing of ours on :$WEB_PORT: left alone"
+    fi
     sleep 2
     say "down     everything stopped: memory is safe in the databases"
     ;;

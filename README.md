@@ -139,6 +139,9 @@ The short way, once dependencies are installed:
 ./demo down      # end of day
 ```
 
+`VEDI_WEB_PORT=3100 ./demo up` moves the surface off a busy port 3000;
+the choice sticks for later commands.
+
 A supervisor restarts anything that dies. The long way:
 
 ```console
